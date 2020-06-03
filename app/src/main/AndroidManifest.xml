@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="gmba.runningapp">
+
+
+
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    <application
+            android:allowBackup="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:supportsRtl="true"
+            android:theme="@style/AppTheme">
+        <uses-library android:name="android.test.runner"
+                      android:required="false" />
+        <uses-library android:name="android.test.base"
+                      android:required="false" />
+        <uses-library android:name="android.test.mock"
+                      android:required="false" />
+
+
+        <activity android:name=".view.runningGUI.history.HistoryActivity"
+                  android:parentActivityName=".view.runningGUI.user.UserActivity">
+        </activity>
+        <activity android:name=".view.runningGUI.run.RunActivity"
+                  android:parentActivityName=".view.runningGUI.user.UserActivity">
+        </activity>
+        <activity
+                android:name=".view.runningGUI.profil.ProfileActivity"
+                android:parentActivityName=".view.runningGUI.user.UserActivity">
+        </activity>
+        <activity
+                android:name=".view.runningGUI.user.UserActivity"
+                android:parentActivityName=".view.runningGUI.start.StartActivity">
+        </activity>
+        <activity android:name=".view.runningGUI.start.StartActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

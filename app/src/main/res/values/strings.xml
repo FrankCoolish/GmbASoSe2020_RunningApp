@@ -1,0 +1,31 @@
+<resources>
+    <!--Start Activity -->
+    <string name="app_name">RunningApp</string>
+    <string name="willkommen">Willkommen zu KulRunning!</string>
+    <string name="user_wählen">Bitte wählen sie einen Benutzer aus.</string>
+    <string name="new_user">oder Erstellen sie einen neuen Benutzer!</string>
+    <string name="buttonCreate">Erstellen</string>
+    <string name="createUserEdit">Enter new Username</string>
+    <!--User Activity -->
+    <string name="userName">Benutzername</string>
+    <string name="buttonProfile">Profil</string>
+    <string name="buttonHistory">History</string>
+    <string name="buttonStart">Start Run</string>
+    <string name="switchRunDetection">Run Detection</string>
+    <!--Profile Activity -->
+    <string name="userProfile">Benutzerprofil</string>
+    <string name="labelName">Name:</string>
+    <string name="labelAnzahlRun">Anzahl Läufe</string>
+    <string name="labelUserId">Id:</string>
+    <string name="buttonDelete">löschen</string>
+    <!--Run Activity -->
+    <string name="buttonFertig">Fertig</string>
+    <string name="labelDauer">Dauer: </string>
+    <string name="labelDistanz">Distanz: </string>
+    <string name="rundec">runDetection off</string>
+
+    <!--History Activity -->
+    <string name="save">Speichern</string>
+    <string name="load">Laden</string>
+    <!-- -->
+</resources>
