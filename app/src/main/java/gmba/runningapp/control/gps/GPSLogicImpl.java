@@ -1,88 +1,65 @@
 package gmba.runningapp.control.gps;
 
-import android.content.Context;
 import android.location.Location;
-import android.os.Looper;
-import com.google.android.gms.location.*;
+import gmba.runningapp.exceptions.NoGPSSensorException;
 
 import java.util.LinkedList;
 import java.util.List;
 
 
 public class GPSLogicImpl implements GPSLogic{
-    private FusedLocationProviderClient fusedLocationProviderClient;
-    private LocationRequest mlocationRequest;
-    private LocationCallback locationCallback;
-    private Location lastLocation;
-    private int REQUEUEST_INTERVALL; //10000 10s
+    private GPSSensor sensor;
     private List<Location> locationList;
-    private Context ctx;
 
-    public GPSLogicImpl(Context ctx, int intervall){
-        init(ctx);
-        locationList =new LinkedList<>();
-        REQUEUEST_INTERVALL = intervall;
+
+    //getter and setter for Testpurposes
+    public void setSensor(GPSSensor sensor) {
+        this.sensor = sensor;
     }
 
-    private void init(Context ctx){
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(ctx);
-        this.ctx = ctx;
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
-                for (Location location : locationResult.getLocations()) {
-                    /*double[] loc = new double[2];
-                    loc[0] = location.getLatitude();
-                    loc[1] = location.getLongitude();
-                    locationList.add(loc);*/
-                    updateLastLocation(location);
-                }
-            }
-        };
-        createLocationRequest();
+    public List<Location> getLocationList() {
+        return locationList;
     }
 
-    private void updateLastLocation(Location location){
-        lastLocation = location;
+    public void setLocationList(List<Location> locationList) {
+        this.locationList = locationList;
+    }
+
+    public GPSLogicImpl() {
+        locationList = new LinkedList<>();
+    }
+
+    //used by the GPS Sensor
+    protected void updateLastLocation (Location location){
         locationList.add(location);
-       //Toast.makeText(ctx,"got location update", Toast.LENGTH_SHORT).show();
-    }
-
-
-    protected  void createLocationRequest(){
-        mlocationRequest = LocationRequest.create();
-        mlocationRequest.setInterval(REQUEUEST_INTERVALL);
-        mlocationRequest.setFastestInterval(5000);
-        mlocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-
-    @Override
-    public Location getGPSLocation() {
-        return lastLocation;
     }
 
     @Override
-    public void startLocationUpdates() {
-        fusedLocationProviderClient.requestLocationUpdates(mlocationRequest,
-                locationCallback,
-                Looper.getMainLooper());
+    public void startLocationUpdates() throws NoGPSSensorException {
+        if(null != sensor){
+            sensor.startLocationUpdates();
+        }else{
+            throw new NoGPSSensorException("GPS Sensor not set");
+        }
     }
 
     @Override
-    public void stopLocationUpdates() {
-        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+    public void stopLocationUpdates() throws NoGPSSensorException {
+        if(null != sensor) {
+            sensor.stopLocationUpdates();
+        }else{
+        throw new NoGPSSensorException("GPS Sensor not set");
+        }
     }
 
     @Override
     public List<Location> retrieveLocationList(){
         List<Location> l = new LinkedList<>();
-        l.addAll(locationList);
-        locationList.clear();
+        if(locationList.size()>1){
+            l.addAll(locationList);
+            locationList.clear();
+        }
         return l;
     }
+
 }

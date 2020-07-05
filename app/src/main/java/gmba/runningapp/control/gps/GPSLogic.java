@@ -1,30 +1,29 @@
 package gmba.runningapp.control.gps;
 
 import android.location.Location;
+import gmba.runningapp.exceptions.NoGPSSensorException;
 
 import java.util.List;
 
 public interface GPSLogic {
-    /**
-     * gives access to the last valid location the GPS sensor saved
-     * @return the last Location
-     *          returns null if there was not yet a Location recieved
-     */
-    Location getGPSLocation();
 
     /**
-     * starts the GPS Locations requests
+     * starts the GPS Locations requests of the GPS Sensor
+     * @throws NoGPSSensorException if GPS Sensor is null
      */
-    void startLocationUpdates();
+    void startLocationUpdates() throws NoGPSSensorException;
 
     /**
-     * the sensor stops asking for Locations
+     * the GPS sensor stops asking for Locations
+     * @throws NoGPSSensorException if GPS Sensor is null
      */
-    void stopLocationUpdates();
+    void stopLocationUpdates()throws NoGPSSensorException;
 
     /**
      * gets all locations from when this function was last called until now
-     * @return the List of all Locations
+     * @return the List of all Locations, only return the list if there are 2 or more Locations
+     *         otherwise the List is empty.
+     *         If the GPS logic has only 1 Location it will be saved for the next method call
      */
     List<Location> retrieveLocationList();
 

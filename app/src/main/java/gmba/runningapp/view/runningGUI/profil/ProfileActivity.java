@@ -9,6 +9,8 @@ import android.os.Bundle;
 import gmba.runningapp.R;
 import gmba.runningapp.control.userverwaltung.UserVerwaltung;
 import gmba.runningapp.control.userverwaltung.UserVerwaltungImpl;
+import gmba.runningapp.exceptions.InvalidValueException;
+import gmba.runningapp.exceptions.ParameterIsNullException;
 import gmba.runningapp.model.datenspeicher.classes.User;
 import gmba.runningapp.view.runningGUI.start.StartActivity;
 import gmba.runningapp.view.runningGUI.user.UserActivity;
@@ -29,12 +31,18 @@ public class ProfileActivity extends AppCompatActivity {
         TextView tv = findViewById(R.id.profileUserNameTextView);
         tv.setText(currentUser+ "'s Profil");
         try {
-            user = userVerwaltung.getUser(currentUser);
+            try {
+                user = userVerwaltung.getUser(currentUser);
+            } catch (ParameterIsNullException e) {
+                e.printStackTrace();
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
             TextView tvUserName = findViewById(R.id.profileTextViewName);
             tvUserName.setText(user.getName());
 
             TextView tvUserAnzahlRun = findViewById(R.id.profileTextViewAnzahl);
-            tvUserAnzahlRun.setText(String.valueOf(user.getAnzahlRuns()));
+            tvUserAnzahlRun.setText(String.valueOf(user.getHistory().size()));
 
             TextView tvId = findViewById(R.id.profileTextViewId);
             tvId.setText(String.valueOf(user.getId()));
@@ -45,7 +53,11 @@ public class ProfileActivity extends AppCompatActivity {
 
     public void onClickDeleteButton(View view){
         Intent intent = new Intent(this, StartActivity.class);
-        userVerwaltung.deleteUser(currentUser);
+        try {
+            userVerwaltung.deleteUser(currentUser);
+        } catch (ParameterIsNullException e) {
+            e.printStackTrace();
+        }
         Toast.makeText(this, currentUser+" gelöscht.", Toast.LENGTH_LONG).show();
         startActivity(intent);
     }

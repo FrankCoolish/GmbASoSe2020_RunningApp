@@ -1,6 +1,10 @@
 package gmba.runningapp.control.userverwaltung;
 
 import android.content.Context;
+import gmba.runningapp.exceptions.AttributeOfParamIsNullException;
+import gmba.runningapp.exceptions.InvalidValueException;
+import gmba.runningapp.exceptions.ParameterIsNullException;
+import gmba.runningapp.exceptions.RunNotFoundException;
 import gmba.runningapp.model.datenspeicher.DataSingletonImpl;
 import gmba.runningapp.model.datenspeicher.classes.Run;
 import gmba.runningapp.model.datenspeicher.classes.User;
@@ -40,7 +44,11 @@ public class UserVerwaltungImpl implements UserVerwaltung {
     private LinkedList<User> loadAllUsers(){
         LinkedList<User> users = new LinkedList<>();
         for(String s: userNamesList){
-            users.add(data.loadUserData(s));
+            try {
+                users.add(data.loadUserData(s));
+            }catch (ParameterIsNullException e){
+                e.printStackTrace();
+            }
         }
         return users;
     }
@@ -53,28 +61,32 @@ public class UserVerwaltungImpl implements UserVerwaltung {
 
 
     @Override
-    public void addUser(String userName) throws IllegalArgumentException, NullPointerException {
+    public void addUser(String userName) throws ParameterIsNullException, InvalidValueException {
         if(null == userName){
-            throw new NullPointerException("param userName is null");
+            throw new ParameterIsNullException("param userName is null");
         }
-        if(userName.equals("notFound")) {
-            throw new IllegalArgumentException("name notFound is not allowed.");
+        if(userName.equals("notFound") || userName.equals("") ) {
+            throw new InvalidValueException("name: notFound or an empty String is not allowed.");
         }
         if(userNamesList.contains(userName)){
-            throw new IllegalArgumentException("Name bereits vergeben.");
+            throw new InvalidValueException("Name bereits vergeben.");
         }else{
             userNamesList.add(userName);
             data.saveUserList(userNamesList);
             User newUser  = new UserImpl(highestId+1, userName, 0, new LinkedList<Run>());
-            data.saveUserData(newUser);
+            try{
+                data.saveUserData(newUser);
+            } catch(AttributeOfParamIsNullException e){
+                //TODO: log exception
+            }
             updateUserverwaltung();
         }
     }
 
     @Override
-    public void setCurrentUserName(String name) throws NullPointerException {
+    public void setCurrentUserName(String name) throws ParameterIsNullException {
         if(null == name){
-            throw new NullPointerException("param name is null");
+            throw new ParameterIsNullException("param name is null");
         }
         data.setCurrentUser(name);
     }
@@ -85,16 +97,16 @@ public class UserVerwaltungImpl implements UserVerwaltung {
     }
 
     @Override
-    public User getUser(String name) throws IllegalArgumentException, NullPointerException {
+    public User getUser(String name) throws ParameterIsNullException, InvalidValueException {
         if(null == name){
-            throw new NullPointerException("param name is null");
+            throw new ParameterIsNullException("param name is null");
         }
         for(User u : allUsers){
             if(u.getName().equals(name)){
                 return u;
             }
         }
-        throw new IllegalArgumentException("User not found.");
+        throw new InvalidValueException("User not found.");
     }
 
     @Override
@@ -103,33 +115,41 @@ public class UserVerwaltungImpl implements UserVerwaltung {
     }
 
     @Override
-    public void deleteUser(String name) {
+    public void deleteUser(String name) throws ParameterIsNullException {
         if(null == name){
-            throw new NullPointerException("name is null ");
+            throw new ParameterIsNullException("name is null ");
         }
         userNamesList.remove(name);
         data.saveUserList(userNamesList);
         data.deleteUserData(name);
         for(Integer i : data.loadUserRunList(name)){
-            data.deleteUserRun(name,i);
+            try {
+                data.deleteUserRun(name, i);
+            }catch (ParameterIsNullException e1){
+                //TODO: log error
+                e1.printStackTrace();
+            }catch (InvalidValueException e2){
+                //TODO: log error
+                e2.printStackTrace();
+            }
         }
         updateUserverwaltung();
     }
 
     @Override
-    public void addRun(Run run, String userName) throws NullPointerException, IllegalArgumentException {
+    public void addRun(Run run, String userName) throws ParameterIsNullException, InvalidValueException, AttributeOfParamIsNullException {
         if(null== run){
-            throw new NullPointerException("run is null");
+            throw new ParameterIsNullException("run is null");
         }
         if(null== userName){
-            throw new NullPointerException("userName is null");
+            throw new ParameterIsNullException("userName is null");
         }
         if(run.getId() < 1 || run.getTime() < 0 || run.getDistance() < 0 || run.getSpeed() < 0 ){
-            throw new IllegalArgumentException("at Least 1 attribute of run is invalid ");
+            throw new InvalidValueException("at Least 1 attribute of run is invalid ");
         }
         List<Integer> runIds = data.loadUserRunList(userName);
         if(runIds.contains(run.getId())){
-            throw new IllegalArgumentException("Run ID vergeben");
+            throw new InvalidValueException("Run ID vergeben");
         }
         data.saveUserRun(run, userName);
         runIds.add(run.getId());
@@ -137,42 +157,48 @@ public class UserVerwaltungImpl implements UserVerwaltung {
     }
 
     @Override
-    public Run loadRun(String userName, int runId) throws NullPointerException, IllegalArgumentException {
+    public Run loadRun(String userName, int runId) throws ParameterIsNullException, InvalidValueException, RunNotFoundException{
         if(null == userName){
-            throw new NullPointerException("userName is null ");
+            throw new ParameterIsNullException("userName is null ");
         }
         if(runId <1){
-            throw new IllegalArgumentException("Id smaller than 1");
+            throw new InvalidValueException("Id smaller than 1");
         }
         if(data.loadUserRunList(userName).contains(runId)){
             return data.loadUserRun(userName,runId);
         }
-        throw new IllegalArgumentException("Id not found");
+        throw new RunNotFoundException("Id not found");
     }
 
     @Override
-    public void deleteRun(String userName, int runId) {
+    public void deleteRun(String userName, int runId) throws ParameterIsNullException, InvalidValueException, RunNotFoundException {
         if(null == userName){
-            throw new NullPointerException("userName is null ");
+            throw new ParameterIsNullException("userName is null ");
         }
         if(runId <1){
-            throw new IllegalArgumentException("Id smaller than 1");
+            throw new InvalidValueException("Id smaller than 1");
         }
-        if(data.loadUserRunList(userName).contains(runId)){
+        List<Integer> runIds = data.loadUserRunList(userName);
+        if(runIds.contains(runId)){
             data.deleteUserRun(userName,runId);
+            runIds.remove((Integer)runId);
+            data.saveUserRunList(userName,runIds);
+            return;
         }
-        throw new IllegalArgumentException("Id not found");
+        throw new RunNotFoundException("Id: " +runId+ " not found" );
     }
-
-    private int getHighestRunId(List<Integer> runs){
-      int id = 0;
-      for(Integer i: runs){
-          if(i < id ){
+    //TODO: needs testing
+    public  int getHighestRunId(String userName) throws ParameterIsNullException {
+        if(null == userName){
+            throw new ParameterIsNullException("userName is null ");
+        }
+        List<Integer> runIds = data.loadUserRunList(userName);
+        int id = 0;
+        for(Integer i: runIds){
+            if(i > id ){
               id = i;
-          }
-      }
-      return id;
-    };
-
-
+             }
+        }
+         return id;
+    }
 }

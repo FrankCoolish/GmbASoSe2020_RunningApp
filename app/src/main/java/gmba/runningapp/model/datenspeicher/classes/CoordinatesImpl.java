@@ -1,11 +1,11 @@
 package gmba.runningapp.model.datenspeicher.classes;
 
 public class CoordinatesImpl implements Coordinates {
-    double[] coords;
+    double[] coords = new double[2];
 
-    public CoordinatesImpl(double longitude, double latitude ){
-        coords[0] = longitude;
-        coords[1] = latitude;
+    public CoordinatesImpl(double latitude, double longitude ){
+        coords[0] = latitude;
+        coords[1] = longitude;
     }
 
     @Override

@@ -7,5 +7,6 @@ public interface Run {
     float getTime();
     float getDistance();
     float getSpeed();
+    String getDate();
     List<Coordinates> getCoordinates();
 }

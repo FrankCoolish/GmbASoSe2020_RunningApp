@@ -12,6 +12,9 @@
     <string name="buttonHistory">History</string>
     <string name="buttonStart">Start Run</string>
     <string name="switchRunDetection">Run Detection</string>
+    <string name="title_location_permission">Standort Zugriff</string>
+    <string name="text_location_permission">Benötige Zugriff auf Standort für GPS Daten</string>
+    <string name="ok">Ok</string>
     <!--Profile Activity -->
     <string name="userProfile">Benutzerprofil</string>
     <string name="labelName">Name:</string>
@@ -20,12 +23,16 @@
     <string name="buttonDelete">löschen</string>
     <!--Run Activity -->
     <string name="buttonFertig">Fertig</string>
-    <string name="labelDauer">Dauer: </string>
-    <string name="labelDistanz">Distanz: </string>
+    <string name="labelDauer">Dauer:</string>
+    <string name="labelDistanz">Distanz:</string>
     <string name="rundec">runDetection off</string>
 
     <!--History Activity -->
     <string name="save">Speichern</string>
     <string name="load">Laden</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps">Map</string>
     <!-- -->
 </resources>

@@ -1,7 +1,11 @@
 package gmba.runningapp.model.datenspeicher;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import gmba.runningapp.exceptions.AttributeOfParamIsNullException;
+import gmba.runningapp.exceptions.InvalidValueException;
+import gmba.runningapp.exceptions.ParameterIsNullException;
 import gmba.runningapp.model.datenspeicher.classes.*;
 
 
@@ -22,6 +26,7 @@ public class DataSingletonImpl implements Data {
     private static final String RUN_DISTANCE = "runDistance";
     private static final String RUN_COORDS = "runCoords";
     private static final String RUN_SPEED = "runSpeed";
+    private static final String RUN_DATE = "runDate";
 
     private DataSingletonImpl() {
     }
@@ -35,17 +40,23 @@ public class DataSingletonImpl implements Data {
     }
 
     @Override
-    public void saveUserData(User user) throws NullPointerException, IllegalArgumentException {
+    public void saveUserData(User user) throws ParameterIsNullException, InvalidValueException, AttributeOfParamIsNullException {
         if(null == user){
-            throw new NullPointerException("user is null");
+            throw new ParameterIsNullException("user is null");
         }
         if(null == user.getName() || null == user.getName() || null == user.getHistory()){
-            throw new NullPointerException("an attribute of User is null");
+            throw new AttributeOfParamIsNullException("an attribute of User is null");
+        }
+        if(user.getName().equals("notFound")){
+            throw new InvalidValueException("user name: notFound is not allowed");
+        }
+        if(user.getName().equals("")){
+            throw new InvalidValueException("an emptyString as username is not allowed");
         }
         int id = user.getId();
-        int count = user.getAnzahlRuns();
-        if(id <= 0 || count <0){
-            throw new IllegalArgumentException("id should be greater than 0 and minimum count should be 0");
+        int count = user.getHistory().size();
+        if(id <= 0 ){
+            throw new InvalidValueException("id should be greater than 0 and minimum count should be 0");
         }
         String name = user.getName();
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME+"_User_"+name,Context.MODE_PRIVATE);
@@ -57,29 +68,38 @@ public class DataSingletonImpl implements Data {
     }
 
     @Override
-    public User loadUserData(String userName) throws NullPointerException {
+    public User loadUserData(String userName) throws ParameterIsNullException {
         if( null == userName){
-            throw new NullPointerException("param userName is null");
+            throw new ParameterIsNullException("param userName is null");
         }
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME+"_User_"+userName,Context.MODE_PRIVATE);
         int id = sharedPref.getInt(USER_ID, 0);
         String name = sharedPref.getString(USER_NAME,"notFound");
         int count = sharedPref.getInt(USER_RUN_COUNT,-1);
-        return new UserImpl(id, name, count, new LinkedList<Run>());
+
+        List<Run> history = new LinkedList<>();
+        for(int i: loadUserRunList(userName)){
+            try {
+                history.add(loadUserRun(userName, i));
+            }catch (InvalidValueException e){
+                //TODO: log error
+            }
+        }
+        return new UserImpl(id, name, count, history);
     }
 
     @Override
-    public void deleteUserData(String userName) throws NullPointerException {
+    public void deleteUserData(String userName) throws ParameterIsNullException {
         if( null == userName){
-            throw new NullPointerException("param userName is null");
+            throw new ParameterIsNullException("param userName is null");
         }
         ctx.getSharedPreferences(FILENAME+"_User_"+userName,0).edit().clear().apply();
     }
 
     @Override
-    public void saveUserList(List<String> userList) throws NullPointerException {
+    public void saveUserList(List<String> userList) throws ParameterIsNullException {
         if( null == userList){
-            throw new NullPointerException("param userList is null");
+            throw new ParameterIsNullException("param userList is null");
         }
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME,Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -96,9 +116,9 @@ public class DataSingletonImpl implements Data {
     }
 
     @Override
-    public void saveUserRunList(String userName, List<Integer> idList) throws NullPointerException {
+    public void saveUserRunList(String userName, List<Integer> idList) throws ParameterIsNullException {
         if( null == userName || null == idList){
-            throw new NullPointerException("a param is null");
+            throw new ParameterIsNullException("a param is null");
         }
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME+"_User_"+userName,Context.MODE_PRIVATE);
         Set<String> saveSet = new HashSet<>();
@@ -111,14 +131,13 @@ public class DataSingletonImpl implements Data {
     }
 
     @Override
-    public List<Integer> loadUserRunList(String userName) throws NullPointerException {
+    public List<Integer> loadUserRunList(String userName) throws ParameterIsNullException {
         if( null == userName ){
-            throw new NullPointerException("param userName is null");
+            throw new ParameterIsNullException("param userName is null");
         }
         List<Integer> idList = new LinkedList<>();
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME+"_User_"+userName,Context.MODE_PRIVATE);
-        Set<String> loadedSet = new HashSet<>();
-        loadedSet.addAll(sharedPref.getStringSet(USER_RUN_IDS, new HashSet<String>()));
+        Set<String> loadedSet = new HashSet<>(sharedPref.getStringSet(USER_RUN_IDS, new HashSet<String>()));
         for(String s : loadedSet){
             idList.add(Integer.valueOf(s));
         }
@@ -126,23 +145,21 @@ public class DataSingletonImpl implements Data {
     }
 
     @Override
-    public void saveUserRun(Run run, String userName) throws NullPointerException, IllegalArgumentException {
+    public void saveUserRun(Run run, String userName) throws ParameterIsNullException, InvalidValueException, AttributeOfParamIsNullException {
         if( null == userName || null == run ){
-            throw new NullPointerException("a param is null");
+            throw new ParameterIsNullException("a param is null");
         }
+        if(null == run.getDate())
+            throw new AttributeOfParamIsNullException("attribute Date of run is null");
         int id = run.getId();
         float time = run.getTime();
         float distance = run.getDistance();
         float speed = run.getSpeed();
+        String date = run.getDate();
         if(id < 1 || time < 0 || distance < 0 || speed < 0 ){
-            throw new IllegalArgumentException("at Least 1 attribute of run is invalid ");
+            throw new InvalidValueException("at Least 1 attribute of run is invalid ");
         }
-        Set<String> coords = new HashSet<>();
-        for(Coordinates c: run.getCoordinates()){
-            double[] d = c.getCoordinates();
-            coords.add(String.valueOf(d[0]));
-            coords.add(String.valueOf(d[1]));
-        }
+        Set<String> coords = convertCoordinatesToStringSet(run.getCoordinates());
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME+"_User_"+userName+"_RunId_"+id,Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putInt(RUN_ID,id);
@@ -150,57 +167,77 @@ public class DataSingletonImpl implements Data {
         editor.putFloat(RUN_DISTANCE,distance);
         editor.putStringSet(RUN_COORDS, coords);
         editor.putFloat(RUN_SPEED, speed);
+        editor.putString(RUN_DATE, date);
         editor.apply();
     }
 
     @Override
-    public Run loadUserRun(String userName, int runId ) throws NullPointerException, IllegalArgumentException {
+    public Run loadUserRun(String userName, int runId ) throws ParameterIsNullException, InvalidValueException{
         if(null == userName){
-            throw new NullPointerException("userName is null");
+            throw new ParameterIsNullException("userName is null");
         }
         if(1 > runId){
-            throw new IllegalArgumentException("runId has invaled value (<1)");
+            throw new InvalidValueException("runId has invaled value: <1");
         }
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME+"_User_"+userName+"_RunId_"+runId,Context.MODE_PRIVATE);
         int id = sharedPref.getInt(RUN_ID, -1);
         float speed = sharedPref.getFloat(RUN_SPEED, -1);
         float distance = sharedPref.getFloat(RUN_DISTANCE, -1);
         float time = sharedPref.getFloat(RUN_TIME, -1) ;
+        String date = sharedPref.getString(RUN_DATE,"noDate");
         Set<String> stringCoords = sharedPref.getStringSet(RUN_COORDS, new HashSet<String>());
-        List<Coordinates> coords = convertCoordinatesToList(stringCoords);
-        Run r = new RunImpl(id,time,distance,speed,coords);
-        return r;
+        ArrayList<Coordinates> coords = convertStringsToCoordinates(stringCoords);
+        return new RunImpl(id,time,distance,speed,date,coords);
     }
 
     @Override
-    public void deleteUserRun(String userName, int runId) throws NullPointerException, IllegalArgumentException {
+    public void deleteUserRun(String userName, int runId) throws ParameterIsNullException, InvalidValueException {
         if(null == userName){
-            throw new NullPointerException("userName is null");
+            throw new ParameterIsNullException("userName is null");
         }
         if(1 > runId){
-            throw new IllegalArgumentException("runId has invaled value (<1)");
+            throw new InvalidValueException("runId has invaled value (<1)");
         }
         ctx.getSharedPreferences(FILENAME+"_User_"+userName+"_RunId_"+runId,0).edit().clear().apply();
     }
 
-    private LinkedList<Coordinates> convertCoordinatesToList(Set<String> stringCoords){
-        LinkedList<Coordinates> coords = new LinkedList<>();
-        /*
-        double[] d = new double[2];
-        int count = 1;
-        for(String s : stringCoords ){
-
+    private Set<String>  convertCoordinatesToStringSet(List<Coordinates> coords){
+        Set<String> stringCoords = new HashSet<>();
+        int order = 0 ;
+        for(Coordinates c  : coords){
+            double lat = c.getCoordinates()[0];
+            double lo = c.getCoordinates()[1];
+            String setEntry = order+";"+lat+","+lo;
+            stringCoords.add(setEntry);
+            order++;
         }
-        */
+        return stringCoords;
+    }
 
+    private ArrayList<Coordinates> convertStringsToCoordinates(Set<String> stringSet){
+        ArrayList<Coordinates> coords = new ArrayList<>();
+        for(int i =0; i< stringSet.size(); i++){
+            coords.add(null);
+        }
+        for(String s: stringSet){
+            int divider = s.indexOf(",");
+            int orderDivider = s.indexOf(";");
+            if(divider >= 1 && s.length() > divider) {
+                int order = Integer.parseInt(s.substring(0,orderDivider));
+                double lat = Double.parseDouble(s.substring(orderDivider+1, divider));
+                double lo = Double.parseDouble(s.substring(divider+1));
+                Coordinates coordinates = new CoordinatesImpl(lat,lo);
+                coords.set(order,coordinates);
+            }
+        }
         return coords;
     }
 
 
     @Override
-    public void setCurrentUser(String name) throws NullPointerException {
+    public void setCurrentUser(String name) throws ParameterIsNullException {
         if(null == name){
-            throw new NullPointerException("name is null");
+            throw new ParameterIsNullException("name is null");
         }
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME,Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -213,4 +250,6 @@ public class DataSingletonImpl implements Data {
         SharedPreferences sharedPref = ctx.getSharedPreferences(FILENAME,Context.MODE_PRIVATE);
         return sharedPref.getString(CURRENT_USER, "notFound");
     }
+
+
 }

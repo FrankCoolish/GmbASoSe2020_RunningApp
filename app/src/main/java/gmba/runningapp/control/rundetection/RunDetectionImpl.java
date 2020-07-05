@@ -1,37 +1,34 @@
 package gmba.runningapp.control.rundetection;
 
-import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.widget.Toast;
+import gmba.runningapp.exceptions.InvalidValueException;
 
-public class RunDetectionImpl implements RunDetection, SensorEventListener {
-    private SensorManager sensorManager;
-    private Sensor mAccelerometer;
+public class RunDetectionImpl implements RunDetection {
+    private AccelerometerSensor accSensor;
     private long lastTime = 0;
-    private String state = "not running";
     private boolean isRunnig = false;
-    private Context ctx;
     private final static String RUNNING = "running";
     private final static String NOT_RUNNING = "not running";
+    private String runningState = NOT_RUNNING;
 
-    public RunDetectionImpl(Context ctx){
-        this.ctx = ctx;
-        sensorManager = (SensorManager) ctx.getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    public RunDetectionImpl(){
+    }
+
+    public void setAccSensor(AccelerometerSensor accSensor) {
+        this.accSensor = accSensor;
+    }
+
+    public void setLastTime(long lastTime) {
+        this.lastTime = lastTime;
     }
 
     @Override
     public void startRunDetection() {
-        sensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        accSensor.startSensor();
     }
 
     @Override
     public void stopRunDetection() {
-        sensorManager.unregisterListener(this);
+        accSensor.stopSensor();
     }
 
     @Override
@@ -40,45 +37,44 @@ public class RunDetectionImpl implements RunDetection, SensorEventListener {
     }
 
     @Override
-    public final void onSensorChanged(SensorEvent event) {
-        double x = event.values[0];
-        double y = event.values[1];
-        double z = event.values[2];
-
-
-
-        double vec = Math.sqrt(Math.pow(x,2) + Math.pow(y,2) + Math.pow(z,2)) ;
-        double vecwithoutgrav = (Math.floor((vec - 9.81)*100))/100 ;
-        if(vecwithoutgrav >4.5){
-            lastTime = event.timestamp;
+    public void detectRunningState( double vector, long timedif) throws InvalidValueException {
+        if(vector <0 || timedif <0){
+            throw new InvalidValueException("vector or timedifferenz is below 0");
         }
-
         if(lastTime !=0){
-
-            long res = (event.timestamp - lastTime) / 1000000000;
-            switch (state){
+            switch (runningState){
                 case NOT_RUNNING:
-                    if(vecwithoutgrav> 3.0 && res < 2) {
-                        state = RUNNING;
+                    if(vector> 3.0 && timedif < 2) {
+                        runningState = RUNNING;
                         isRunnig = true;
                     }
                     break;
-
                 case RUNNING:
-                    if(vecwithoutgrav <= 3.0 && res > 3) {
-                        state = NOT_RUNNING;
+                    if(vector <= 3.0&& timedif > 3) {
+                        runningState = NOT_RUNNING;
                         isRunnig = false;
                     }
                     break;
-
                 default:
                     break;
             }
         }
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    protected void stampTime(double vec, long time){
+        if(vec > 3.0){
+            lastTime = time;
+        }
+    }
 
+    protected long calcTimediff(long nowTime){
+        long time = (nowTime - lastTime) / 1000000000;
+        return  time;
+    }
+
+    protected double calculateVectorWithOutGravity(double xValue, double yValue, double zValue){
+        double vec = Math.sqrt(Math.pow(xValue,2) + Math.pow(yValue,2) + Math.pow(zValue,2)) ;
+        double vecwithoutgrav = (Math.floor((vec - 9.81)*100))/100 ;
+        return  vecwithoutgrav;
     }
 }
