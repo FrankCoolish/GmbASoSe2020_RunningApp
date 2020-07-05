@@ -286,7 +286,11 @@ public class UserVerwaltungImplTest {
     @Test
     public void getHighestRunIdTest_Success() throws Exception{
         Run expected = new RunImpl(20, 1, 1, 1,"24-12-1980", new LinkedList<Coordinates>());
-        userVerwaltung.deleteRun("testa",20);
+        try {
+            userVerwaltung.deleteRun("testa", 20);
+        }catch (Exception e){
+            //ignore if the run doesnot exist we dont need to delete it
+        }
         userVerwaltung.addRun(expected, "testa");
         int actual = userVerwaltung.getHighestRunId("testa");
         assertEquals(20,actual);

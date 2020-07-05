@@ -21,14 +21,14 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.hamcrest.Matchers.*;
 
 
-@RunWith(AndroidJUnit4.class)
+
 public class RunListActivityIntentTest {
 
     private static final int RUNID = 1;
     private static final String PACKAGE_NAME = "gmba.runningapp";
 
     /* Instantiate an IntentsTestRule object. */
-    @Rule
+
     public IntentsTestRule<RunListActivity> intentsRule =
             new IntentsTestRule(RunListActivity.class);
 
